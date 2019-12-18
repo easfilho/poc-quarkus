@@ -6,6 +6,7 @@ import org.acme.model.Dog;
 import org.acme.service.DogService;
 import org.modelmapper.ModelMapper;
 
+import javax.enterprise.inject.Model;
 import javax.transaction.Transactional;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -20,17 +21,19 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Path("/dogs")
 public class DogApi {
 
     private final DogService dogService;
+    private final ModelMapper modelMapper;
 
     public DogApi(DogService dogService) {
         this.dogService = dogService;
+        this.modelMapper = new ModelMapper();
     }
 
     @POST
@@ -38,20 +41,22 @@ public class DogApi {
     @Consumes(MediaType.APPLICATION_JSON)
     @Transactional
     public Response create(final DogInputDto dogInputDto) {
-        ModelMapper modelMapper = new ModelMapper();
-        Dog dog = modelMapper.map(dogInputDto, Dog.class);
-        dogService.create(dog);
-        DogOutputDto dogOutputDto = map(dog);
-        return Response.status(Response.Status.CREATED)
-                .entity(dogOutputDto)
-                .build();
+        return Stream.of(modelMapper.map(dogInputDto, Dog.class))
+                .map(dog -> {
+                    dogService.create(dog);
+                    return map(dog);
+                }).map(dogOutputDto -> Response.status(Response.Status.CREATED)
+                        .entity(dogOutputDto)
+                        .build())
+                .findFirst()
+                .get();
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response list(@DefaultValue(value = "") @QueryParam("name") String name) {
-        List<Dog> dogs = dogService.list(name);
-        List<DogOutputDto> dogsOutput = dogs.stream()
+        List<DogOutputDto> dogsOutput = dogService.list(name)
+                .stream()
                 .map(this::map)
                 .collect(Collectors.toList());
         return Response.ok(dogsOutput).build();
@@ -61,9 +66,7 @@ public class DogApi {
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response consult(@PathParam(value = "id") Long id) {
-        System.out.println("Caiu no id");
         return dogService.consult(id)
-                .filter(Objects::nonNull)
                 .map(this::map)
                 .map(dogOutputDto ->  Response.ok(dogOutputDto).build())
                 .orElseGet(() -> Response.noContent().build());
@@ -75,12 +78,15 @@ public class DogApi {
     @Consumes(MediaType.APPLICATION_JSON)
     @Transactional
     public Response update(@PathParam("id") Long id, final DogInputDto dogInputDto) {
-        ModelMapper modelMapper = new ModelMapper();
-        Dog dog = modelMapper.map(dogInputDto, Dog.class);
-        dogService.update(dog, id);
-        DogOutputDto dogOutputDto = map(dog);
-        return Response.ok(dogOutputDto)
-                .build();
+        return Stream.of(modelMapper.map(dogInputDto, Dog.class))
+                .map(dog -> {
+                    dogService.update(dog, id);
+                    return map(dog);
+                })
+                .map(dogOutputDto -> Response.ok(dogOutputDto)
+                        .build())
+                .findFirst()
+                .get();
     }
 
     @DELETE

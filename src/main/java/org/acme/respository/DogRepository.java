@@ -5,7 +5,6 @@ import org.acme.model.Dog;
 
 import javax.enterprise.context.ApplicationScoped;
 import java.util.List;
-import java.util.Optional;
 
 @ApplicationScoped
 public class DogRepository {

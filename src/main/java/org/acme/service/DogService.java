@@ -36,6 +36,7 @@ public class DogService {
             dogToUpdate.get().setSize(dog.getSize());
             dogToUpdate.get().setRace(dog.getRace());
             dogToUpdate.get().persist();
+            dog.id = id;
         }
     }
 
