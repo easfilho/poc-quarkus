@@ -2,12 +2,14 @@ package org.acme.service;
 
 import org.acme.model.Dog;
 import org.acme.respository.DogRepository;
+import org.eclipse.microprofile.opentracing.Traced;
 
 import javax.enterprise.context.ApplicationScoped;
 import java.util.List;
 import java.util.Optional;
 
 @ApplicationScoped
+@Traced
 public class DogService {
 
     private final DogRepository dogRepository;
