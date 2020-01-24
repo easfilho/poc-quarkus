@@ -4,9 +4,10 @@ import org.acme.api.dto.DogInputDto;
 import org.acme.api.dto.DogOutputDto;
 import org.acme.model.Dog;
 import org.acme.service.DogService;
+import org.eclipse.microprofile.metrics.annotation.Counted;
+import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
 import org.modelmapper.ModelMapper;
 
-import javax.enterprise.inject.Model;
 import javax.transaction.Transactional;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -40,7 +41,7 @@ public class DogApi {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Transactional
-    public Response create(final DogInputDto dogInputDto) {
+    public Response create(final @RequestBody DogInputDto dogInputDto) {
         return Stream.of(modelMapper.map(dogInputDto, Dog.class))
                 .map(dog -> {
                     dogService.create(dog);
@@ -65,6 +66,7 @@ public class DogApi {
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
+    @Counted(name = "consult dog by id")
     public Response consult(@PathParam(value = "id") Long id) {
         return dogService.consult(id)
                 .map(this::map)
@@ -77,7 +79,7 @@ public class DogApi {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Transactional
-    public Response update(@PathParam("id") Long id, final DogInputDto dogInputDto) {
+    public Response update(@PathParam("id") Long id, final @RequestBody DogInputDto dogInputDto) {
         return Stream.of(modelMapper.map(dogInputDto, Dog.class))
                 .map(dog -> {
                     dogService.update(dog, id);
